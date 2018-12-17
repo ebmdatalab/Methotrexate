@@ -1,4 +1,4 @@
-cd "C:\Users\Alex\Documents\GitHub\Methotrexate"
+cd "C:\Users\ajwalker\Documents\GitHub\Methotrexate"
 import delimited "methotrexate_for_analysis.csv",clear
 
 *misstable summ,all
