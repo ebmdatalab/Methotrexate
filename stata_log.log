@@ -1,0 +1,566 @@
+----------------------------------------------------------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  C:\Users\alexw\Documents\GitHub\Methotrexate\stata_log.log
+  log type:  text
+ opened on:   9 Jun 2020, 10:20:48
+
+. do "C:\Users\alexw\AppData\Local\Temp\STD00000000.tmp"
+
+. cd "C:\Users\alexw\Documents\GitHub\Methotrexate"
+C:\Users\alexw\Documents\GitHub\Methotrexate
+
+. import delimited "methotrexate_for_analysis.csv",clear
+(22 vars, 7373 obs)
+
+. 
+. *misstable summ,all
+. gen num_gps = num_gps_june
+(476 missing values generated)
+
+. replace num_gps = num_gps_sept if num_gps ==.
+(81 real changes made)
+
+. 
+. recode rate 0/0.0999999999999=0 0.1/max=1, gen(rate_bin)
+(3133 differences between rate and rate_bin)
+
+. 
+. xtile qof = total, nq(5)
+
+. xtile imd = value_imd, nq(5)
+
+. xtile composite_score = mean_percentile, nq(5)
+
+. recode num_gps min/1=1 2/max=0 .=0, gen(single_handed)
+(6850 differences between num_gps and single_handed)
+
+. recode rural_urban_code 1=6 2=5 3=4 4=3 5=2 6=1,gen(rural_urban)
+(7275 differences between rural_urban_code and rural_urban)
+
+. xtile over_65 = value_over_65,nq(5)
+
+. xtile under_18 = value_under_18,nq(5)
+
+. xtile long_term_health = value_long_term_health,nq(5)
+
+. 
+. tabstat value_over_65,by(over_65) s(min max)
+
+Summary for variables: value_over_65
+     by categories of: over_65 (5 quantiles of value_over_65)
+
+ over_65 |       min       max
+---------+--------------------
+       1 |         0  10.99012
+       2 |  10.99356  15.54015
+       3 |  15.54294  18.92506
+       4 |  18.93268  22.49065
+       5 |   22.4913  92.18329
+---------+--------------------
+   Total |         0  92.18329
+------------------------------
+
+. tabstat value_under_18,by(under_18) s(min max)
+
+Summary for variables: value_under_18
+     by categories of: under_18 (5 quantiles of value_under_18)
+
+under_18 |       min       max
+---------+--------------------
+       1 |         0  17.85131
+       2 |  17.85172  19.61036
+       3 |  19.61088  21.19403
+       4 |  21.19408  23.61601
+       5 |  23.61729  53.60716
+---------+--------------------
+   Total |         0  53.60716
+------------------------------
+
+. tabstat value_long_term_health,by(long_term_health) s(min max)
+
+Summary for variables: value_long_term_health
+     by categories of: long_term_health (5 quantiles of value_long_term_health)
+
+long_term_health |       min       max
+-----------------+--------------------
+               1 |  16.45466   47.0313
+               2 |   47.0368  51.45968
+               3 |  51.46028  55.31557
+               4 |  55.31668   59.6667
+               5 |  59.67391  94.95415
+-----------------+--------------------
+           Total |  16.45466  94.95415
+--------------------------------------
+
+. tabstat total,by(qof) s(min max)
+
+Summary for variables: total
+     by categories of: qof (5 quantiles of total)
+
+     qof |       min       max
+---------+--------------------
+       1 |    240.94    523.06
+       2 |    523.07    540.93
+       3 |    540.94    550.23
+       4 |    550.24    556.57
+       5 |    556.58       559
+---------+--------------------
+   Total |    240.94       559
+------------------------------
+
+. encode principalsupplier, gen(principalsupplier_e)
+
+. 
+. foreach indepvar in over_65 under_18 long_term_health single_handed rural_urban imd qof composite_score principalsupplier_e {
+  2.         tab `indepvar' rate_bin ,row nofr
+  3.         logit rate_bin i.`indepvar' , or
+  4. }
+
+         5 |
+ quantiles |
+        of |
+value_over |    RECODE of rate
+       _65 |         0          1 |     Total
+-----------+----------------------+----------
+         1 |     72.76      27.24 |    100.00 
+         2 |     80.74      19.26 |    100.00 
+         3 |     86.42      13.58 |    100.00 
+         4 |     91.95       8.05 |    100.00 
+         5 |     94.56       5.44 |    100.00 
+-----------+----------------------+----------
+     Total |     85.29      14.71 |    100.00 
+
+
+Iteration 0:   log likelihood = -3034.9141  
+Iteration 1:   log likelihood = -2868.1851  
+Iteration 2:   log likelihood = -2854.0456  
+Iteration 3:   log likelihood = -2853.9917  
+Iteration 4:   log likelihood = -2853.9917  
+
+Logistic regression                               Number of obs   =       7266
+                                                  LR chi2(4)      =     361.84
+                                                  Prob > chi2     =     0.0000
+Log likelihood = -2853.9917                       Pseudo R2       =     0.0596
+
+------------------------------------------------------------------------------
+    rate_bin | Odds Ratio   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+     over_65 |
+          2  |   .6372068   .0566134    -5.07   0.000     .5353704    .7584142
+          3  |   .4197195    .040572    -8.98   0.000     .3472788    .5072711
+          4  |   .2338002   .0264157   -12.86   0.000     .1873582    .2917542
+          5  |    .153614   .0199441   -14.43   0.000     .1191015    .1981273
+             |
+       _cons |   .3742911   .0220496   -16.68   0.000     .3334763    .4201014
+------------------------------------------------------------------------------
+
+         5 |
+ quantiles |
+        of |
+value_unde |    RECODE of rate
+      r_18 |         0          1 |     Total
+-----------+----------------------+----------
+         1 |     88.43      11.57 |    100.00 
+         2 |     89.27      10.73 |    100.00 
+         3 |     87.13      12.87 |    100.00 
+         4 |     82.39      17.61 |    100.00 
+         5 |     79.22      20.78 |    100.00 
+-----------+----------------------+----------
+     Total |     85.29      14.71 |    100.00 
+
+
+Iteration 0:   log likelihood = -3034.9141  
+Iteration 1:   log likelihood = -2993.5644  
+Iteration 2:   log likelihood = -2992.8389  
+Iteration 3:   log likelihood = -2992.8387  
+
+Logistic regression                               Number of obs   =       7266
+                                                  LR chi2(4)      =      84.15
+                                                  Prob > chi2     =     0.0000
+Log likelihood = -2992.8387                       Pseudo R2       =     0.0139
+
+------------------------------------------------------------------------------
+    rate_bin | Odds Ratio   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+    under_18 |
+          2  |   .9185562   .1083424    -0.72   0.471     .7289667    1.157454
+          3  |   1.128921   .1280651     1.07   0.285     .9038641    1.410016
+          4  |   1.633198    .174929     4.58   0.000      1.32394    2.014696
+          5  |   2.005338   .2094716     6.66   0.000     1.634081    2.460943
+             |
+       _cons |   .1308411   .0107347   -24.79   0.000      .111406    .1536668
+------------------------------------------------------------------------------
+
+         5 |
+ quantiles |
+        of |
+value_long |
+_term_heal |    RECODE of rate
+        th |         0          1 |     Total
+-----------+----------------------+----------
+         1 |     76.41      23.59 |    100.00 
+         2 |     81.61      18.39 |    100.00 
+         3 |     87.26      12.74 |    100.00 
+         4 |     89.39      10.61 |    100.00 
+         5 |     91.67       8.33 |    100.00 
+-----------+----------------------+----------
+     Total |     85.27      14.73 |    100.00 
+
+
+Iteration 0:   log likelihood = -3033.6402  
+Iteration 1:   log likelihood = -2949.7415  
+Iteration 2:   log likelihood = -2946.4212  
+Iteration 3:   log likelihood = -2946.4166  
+Iteration 4:   log likelihood = -2946.4166  
+
+Logistic regression                               Number of obs   =       7258
+                                                  LR chi2(4)      =     174.45
+                                                  Prob > chi2     =     0.0000
+Log likelihood = -2946.4166                       Pseudo R2       =     0.0288
+
+----------------------------------------------------------------------------------
+        rate_bin | Odds Ratio   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-----------------+----------------------------------------------------------------
+long_term_health |
+              2  |   .7299726   .0669656    -3.43   0.001     .6098454    .8737624
+              3  |   .4730519   .0473552    -7.48   0.000     .3887752    .5755976
+              4  |    .384379   .0404794    -9.08   0.000     .3126934    .4724987
+              5  |   .2945242   .0333766   -10.79   0.000     .2358629    .3677751
+                 |
+           _cons |   .3086643   .0190936   -19.00   0.000     .2734211    .3484501
+----------------------------------------------------------------------------------
+
+ RECODE of |    RECODE of rate
+   num_gps |         0          1 |     Total
+-----------+----------------------+----------
+         0 |     85.44      14.56 |    100.00 
+         1 |     84.10      15.90 |    100.00 
+-----------+----------------------+----------
+     Total |     85.35      14.65 |    100.00 
+
+
+Iteration 0:   log likelihood = -3070.7854  
+Iteration 1:   log likelihood = -3070.4442  
+Iteration 2:   log likelihood = -3070.4438  
+Iteration 3:   log likelihood = -3070.4438  
+
+Logistic regression                               Number of obs   =       7370
+                                                  LR chi2(1)      =       0.68
+                                                  Prob > chi2     =     0.4084
+Log likelihood = -3070.4438                       Pseudo R2       =     0.0001
+
+---------------------------------------------------------------------------------
+       rate_bin | Odds Ratio   Std. Err.      z    P>|z|     [95% Conf. Interval]
+----------------+----------------------------------------------------------------
+1.single_handed |   1.109554   .1381384     0.84   0.404     .8693096    1.416192
+          _cons |   .1703982   .0058383   -51.65   0.000     .1593312     .182234
+---------------------------------------------------------------------------------
+
+ RECODE of |
+rural_urba |    RECODE of rate
+    n_code |         0          1 |     Total
+-----------+----------------------+----------
+         1 |     75.88      24.12 |    100.00 
+         2 |     98.68       1.32 |    100.00 
+         3 |     89.85      10.15 |    100.00 
+         4 |     90.75       9.25 |    100.00 
+         5 |     94.67       5.33 |    100.00 
+         6 |     95.01       4.99 |    100.00 
+-----------+----------------------+----------
+     Total |     85.42      14.58 |    100.00 
+
+
+Iteration 0:   log likelihood = -3019.9992  
+Iteration 1:   log likelihood = -2823.7132  
+Iteration 2:   log likelihood = -2805.2867  
+Iteration 3:   log likelihood = -2804.4523  
+Iteration 4:   log likelihood =  -2804.442  
+Iteration 5:   log likelihood =  -2804.442  
+
+Logistic regression                               Number of obs   =       7272
+                                                  LR chi2(5)      =     431.11
+                                                  Prob > chi2     =     0.0000
+Log likelihood =  -2804.442                       Pseudo R2       =     0.0714
+
+------------------------------------------------------------------------------
+    rate_bin | Odds Ratio   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+ rural_urban |
+          2  |    .042079   .0212552    -6.27   0.000     .0156351    .1132477
+          3  |   .3553468     .03163   -11.62   0.000     .2984595    .4230769
+          4  |   .3204434   .0409193    -8.91   0.000     .2494919    .4115724
+          5  |   .1769567   .0297236   -10.31   0.000     .1273179    .2459485
+          6  |   .1652477    .032256    -9.22   0.000     .1127153    .2422636
+             |
+       _cons |   .3179241   .0135178   -26.95   0.000     .2925037    .3455537
+------------------------------------------------------------------------------
+
+         5 |
+ quantiles |
+        of |    RECODE of rate
+ value_imd |         0          1 |     Total
+-----------+----------------------+----------
+         1 |     88.03      11.97 |    100.00 
+         2 |     87.48      12.52 |    100.00 
+         3 |     83.47      16.53 |    100.00 
+         4 |     83.14      16.86 |    100.00 
+         5 |     84.31      15.69 |    100.00 
+-----------+----------------------+----------
+     Total |     85.29      14.71 |    100.00 
+
+
+Iteration 0:   log likelihood = -3034.9141  
+Iteration 1:   log likelihood = -3022.4682  
+Iteration 2:   log likelihood = -3022.4135  
+Iteration 3:   log likelihood = -3022.4135  
+
+Logistic regression                               Number of obs   =       7266
+                                                  LR chi2(4)      =      25.00
+                                                  Prob > chi2     =     0.0001
+Log likelihood = -3022.4135                       Pseudo R2       =     0.0041
+
+------------------------------------------------------------------------------
+    rate_bin | Odds Ratio   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+         imd |
+          2  |   1.052555   .1191251     0.45   0.651     .8431571    1.313958
+          3  |   1.456697     .15635     3.50   0.000     1.180343    1.797754
+          4  |   1.491969   .1595628     3.74   0.000     1.209834    1.839899
+          5  |   1.369177   .1482931     2.90   0.004     1.107305    1.692979
+             |
+       _cons |   .1359375   .0109835   -24.70   0.000     .1160282     .159263
+------------------------------------------------------------------------------
+
+         5 |
+ quantiles |    RECODE of rate
+  of total |         0          1 |     Total
+-----------+----------------------+----------
+         1 |     80.98      19.02 |    100.00 
+         2 |     82.71      17.29 |    100.00 
+         3 |     86.23      13.77 |    100.00 
+         4 |     86.94      13.06 |    100.00 
+         5 |     90.05       9.95 |    100.00 
+-----------+----------------------+----------
+     Total |     85.38      14.62 |    100.00 
+
+
+Iteration 0:   log likelihood =  -3053.694  
+Iteration 1:   log likelihood = -3023.5203  
+Iteration 2:   log likelihood = -3023.0713  
+Iteration 3:   log likelihood = -3023.0711  
+
+Logistic regression                               Number of obs   =       7340
+                                                  LR chi2(4)      =      61.25
+                                                  Prob > chi2     =     0.0000
+Log likelihood = -3023.0711                       Pseudo R2       =     0.0100
+
+------------------------------------------------------------------------------
+    rate_bin | Odds Ratio   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+         qof |
+          2  |   .8901632   .0853166    -1.21   0.225     .7377127    1.074118
+          3  |   .6799439   .0685598    -3.83   0.000     .5580141    .8285161
+          4  |   .6397092   .0652904    -4.38   0.000     .5237291    .7813731
+          5  |   .4706117   .0516222    -6.87   0.000     .3795709    .5834888
+             |
+       _cons |   .2348485    .015624   -21.78   0.000     .2061385    .2675571
+------------------------------------------------------------------------------
+
+         5 |
+ quantiles |
+        of |
+mean_perce |    RECODE of rate
+     ntile |         0          1 |     Total
+-----------+----------------------+----------
+         1 |     84.73      15.27 |    100.00 
+         2 |     85.55      14.45 |    100.00 
+         3 |     86.64      13.36 |    100.00 
+         4 |     86.24      13.76 |    100.00 
+         5 |     83.58      16.42 |    100.00 
+-----------+----------------------+----------
+     Total |     85.35      14.65 |    100.00 
+
+
+Iteration 0:   log likelihood = -3070.7854  
+Iteration 1:   log likelihood = -3067.2858  
+Iteration 2:   log likelihood = -3067.2797  
+Iteration 3:   log likelihood = -3067.2797  
+
+Logistic regression                               Number of obs   =       7370
+                                                  LR chi2(4)      =       7.01
+                                                  Prob > chi2     =     0.1353
+Log likelihood = -3067.2797                       Pseudo R2       =     0.0011
+
+---------------------------------------------------------------------------------
+       rate_bin | Odds Ratio   Std. Err.      z    P>|z|     [95% Conf. Interval]
+----------------+----------------------------------------------------------------
+composite_score |
+             2  |   .9369072   .0970664    -0.63   0.529     .7647325    1.147846
+             3  |   .8556721   .0901708    -1.48   0.139     .6959976    1.051979
+             4  |   .8851992   .0926631    -1.16   0.244     .7210026    1.086789
+             5  |   1.089524   .1099806     0.85   0.396       .89395    1.327884
+                |
+          _cons |   .1802885   .0130578   -23.65   0.000     .1564291    .2077869
+---------------------------------------------------------------------------------
+
+ Principal |    RECODE of rate
+  Supplier |         0          1 |     Total
+-----------+----------------------+----------
+      EMIS |     85.95      14.05 |    100.00 
+ Microtest |     98.28       1.72 |    100.00 
+       TPP |     86.13      13.87 |    100.00 
+    Vision |     70.48      29.52 |    100.00 
+-----------+----------------------+----------
+     Total |     85.27      14.73 |    100.00 
+
+
+Iteration 0:   log likelihood = -3004.9265  
+Iteration 1:   log likelihood = -2974.3624  
+Iteration 2:   log likelihood = -2969.6781  
+Iteration 3:   log likelihood = -2969.5636  
+Iteration 4:   log likelihood = -2969.5629  
+Iteration 5:   log likelihood = -2969.5629  
+
+Logistic regression                               Number of obs   =       7188
+                                                  LR chi2(3)      =      70.73
+                                                  Prob > chi2     =     0.0000
+Log likelihood = -2969.5629                       Pseudo R2       =     0.0118
+
+-------------------------------------------------------------------------------------
+           rate_bin | Odds Ratio   Std. Err.      z    P>|z|     [95% Conf. Interval]
+--------------------+----------------------------------------------------------------
+principalsupplier_e |
+         Microtest  |   .1072863   .1083298    -2.21   0.027     .0148274    .7762909
+               TPP  |   .9846699   .0711334    -0.21   0.831     .8546714    1.134442
+            Vision  |   2.560928   .3055286     7.88   0.000     2.026962    3.235556
+                    |
+              _cons |   .1635238   .0073178   -40.46   0.000     .1497922    .1785142
+-------------------------------------------------------------------------------------
+
+. 
+. melogit rate_bin i.over_65 i.under_18 i.long_term_health i.single_handed i.rural_urban i.imd i.qof i.composite_score i.principal
+> supplier_e || pct: , or
+
+Fitting fixed-effects model:
+
+Iteration 0:   log likelihood =  -2627.775  
+Iteration 1:   log likelihood = -2551.0047  
+Iteration 2:   log likelihood =   -2548.41  
+Iteration 3:   log likelihood = -2548.3543  
+Iteration 4:   log likelihood = -2548.3542  
+
+Refining starting values:
+
+Grid node 0:   log likelihood = -2024.6593
+
+Fitting full model:
+
+Iteration 0:   log likelihood = -2024.6593  
+Iteration 1:   log likelihood = -1948.9495  
+Iteration 2:   log likelihood =  -1931.634  
+Iteration 3:   log likelihood = -1929.2013  
+Iteration 4:   log likelihood = -1929.0914  
+Iteration 5:   log likelihood = -1929.0929  
+Iteration 6:   log likelihood =  -1929.093  
+
+Mixed-effects logistic regression               Number of obs      =      6993
+Group variable:             pct                 Number of groups   =       196
+
+                                                Obs per group: min =         1
+                                                               avg =      35.7
+                                                               max =       171
+
+Integration method: mvaghermite                 Integration points =         7
+
+                                                Wald chi2(33)      =    163.34
+Log likelihood =  -1929.093                     Prob > chi2        =    0.0000
+-------------------------------------------------------------------------------------
+           rate_bin | Odds Ratio   Std. Err.      z    P>|z|     [95% Conf. Interval]
+--------------------+----------------------------------------------------------------
+                    |
+            over_65 |
+                 2  |   .7630308   .1015855    -2.03   0.042     .5877843    .9905265
+                 3  |   .6318219   .1105646    -2.62   0.009     .4483737    .8903263
+                 4  |   .3632916   .0779528    -4.72   0.000     .2385667    .5532238
+                 5  |    .268464   .0703563    -5.02   0.000     .1606245    .4487044
+                    |
+           under_18 |
+                 2  |   .8509062   .1386197    -0.99   0.322     .6183208     1.17098
+                 3  |   .6861258   .1147832    -2.25   0.024     .4943161    .9523635
+                 4  |   .7117933   .1198059    -2.02   0.043     .5117802    .9899753
+                 5  |   .6753896   .1206788    -2.20   0.028     .4758405    .9586219
+                    |
+   long_term_health |
+                 2  |   .8772008   .1102191    -1.04   0.297     .6857198    1.122151
+                 3  |   .8713749    .122144    -0.98   0.326      .662047    1.146889
+                 4  |   .8078881   .1237028    -1.39   0.164     .5984341    1.090652
+                 5  |   .7800261   .1318954    -1.47   0.142     .5599879    1.086525
+                    |
+    1.single_handed |    1.21465   .2090871     1.13   0.259     .8668166    1.702061
+                    |
+        rural_urban |
+                 2  |   .1163537   .0997632    -2.51   0.012     .0216745    .6246139
+                 3  |   .1843009   .0594684    -5.24   0.000     .0979197    .3468843
+                 4  |   .1289703    .046645    -5.66   0.000     .0634795     .262027
+                 5  |   .1468204   .0554334    -5.08   0.000     .0700499    .3077267
+                 6  |   .1481897   .0613047    -4.62   0.000     .0658694    .3333899
+                    |
+                imd |
+                 2  |   1.040447   .1714417     0.24   0.810     .7532891    1.437072
+                 3  |   .9766972   .1719669    -0.13   0.893     .6916542    1.379211
+                 4  |   .9894539   .1949256    -0.05   0.957     .6725214    1.455744
+                 5  |    1.19384   .2637306     0.80   0.423     .7742971    1.840707
+                    |
+                qof |
+                 2  |   .8869486   .1138186    -0.93   0.350      .689711     1.14059
+                 3  |   .7686211   .1033757    -1.96   0.050     .5905137    1.000448
+                 4  |   .7962088   .1097823    -1.65   0.098     .6076622    1.043258
+                 5  |   .6512094   .0993572    -2.81   0.005      .482892    .8781958
+                    |
+    composite_score |
+                 2  |    1.26317   .1778626     1.66   0.097     .9585327    1.664625
+                 3  |   1.391652   .2084558     2.21   0.027     1.037598    1.866518
+                 4  |   1.961971   .3071305     4.31   0.000      1.44359    2.666498
+                 5  |   3.277239     .55514     7.01   0.000      2.35137    4.567677
+                    |
+principalsupplier_e |
+         Microtest  |    1.56881   1.887337     0.37   0.708     .1484371    16.58051
+               TPP  |   .9698119   .1589825    -0.19   0.852     .7033134    1.337291
+            Vision  |   1.680652   .3911384     2.23   0.026     1.065068    2.652028
+                    |
+              _cons |   .2303972   .0793078    -4.26   0.000     .1173477    .4523552
+--------------------+----------------------------------------------------------------
+pct                 |
+          var(_cons)|   3.940496    .640657                      2.865235    5.419281
+-------------------------------------------------------------------------------------
+LR test vs. logistic regression: chibar2(01) =  1238.52 Prob>=chibar2 = 0.0000
+
+. 
+. predict predictions
+(predictions based on fixed effects and posterior means of random effects)
+(option mu assumed)
+(using 7 quadrature points)
+(378 missing values generated)
+
+. qui corr rate_bin predictions
+
+. di "R-squared - fixed effects (%): " round(r(rho)^2*100,.1)
+R-squared - fixed effects (%): 39.5
+
+. 
+. qui predict predictionsr, reffects
+
+. qui corr rate_bin predictionsr
+
+. di "R-squared - random effects (%): " round(r(rho)^2*100,.1)
+R-squared - random effects (%): 25.3
+
+. 
+end of do-file
+
+. log close
+      name:  <unnamed>
+       log:  C:\Users\alexw\Documents\GitHub\Methotrexate\stata_log.log
+  log type:  text
+ closed on:   9 Jun 2020, 10:21:04
+----------------------------------------------------------------------------------------------------------------------------------
